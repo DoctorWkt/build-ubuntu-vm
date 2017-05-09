@@ -1,0 +1,5 @@
+#!/bin/sh
+/usr/local/VBoxLinuxAdditions.run > /usr/local/a 2> /usr/local/b
+rm /usr/local/VBoxLinuxAdditions.run
+rm /etc/rc.local
+exit 0

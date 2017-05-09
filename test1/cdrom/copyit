@@ -1,0 +1,6 @@
+#!/bin/sh
+cp /VBoxLinuxAdditions.run /target/usr/local
+chmod 755 /target/usr/local/VBoxLinuxAdditions.run
+cp /rc.local /target/etc
+chmod 755 /target/etc/rc.local
+exit 0

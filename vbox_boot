@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# Get the directory name of the customisation
+# Lose any trailing slash
+if [ "$#" -ne 1 ]
+then echo "Usage: $0 input_dir"; exit 1
+fi
+config_dir=`echo $1 | sed 's/\/$//'`
+
+# Read the configuration
+if [ ! -f "$config_dir/config" ]
+then echo "Error: file $config_dir/config is missing"; exit 1
+fi
+. $config_dir/config
+
+vmName=$config_dir
+isoImage=$new_iso
+
+VBoxManage unregistervm "$vmName" --delete
+VBoxManage createvm --name "$vmName" --register
+vmDir=$(VBoxManage showvminfo "$vmName" | grep "^Config file:"  | \
+	awk -F":" '{print $2}' | xargs -L1 -IX dirname "X")
+VBoxManage modifyvm "$vmName" --memory 512 --acpi on --boot1 disk \
+	--boot2 dvd --vram 33 --cpus 1
+VBoxManage modifyvm "$vmName" --nic1 nat --nictype1 82540EM --cableconnected1 on
+#VBoxManage modifyvm "$vmName" --natpf1 ",tcp,,9999,,22"
+VBoxManage modifyvm "$vmName" --ostype Ubuntu_64
+VBoxManage modifyvm "$vmName"  --ioapic on
+VBoxManage createhd --filename "$vmDir/${vmName}.vdi" --size 80000
+VBoxManage storagectl "$vmName" --name "SATA" --add sata
+VBoxManage storageattach "$vmName" --storagectl "SATA" --port 0 \
+	--device 0 --type hdd --medium "${vmDir}/${vmName}.vdi"
+VBoxManage storagectl "$vmName" --name "IDE" --add ide
+VBoxManage storageattach "$vmName" --storagectl "IDE" --port 1 \
+	--device 0 --type dvddrive --medium "$isoImage"
+VBoxManage showvminfo "$vmName"
+VBoxManage startvm "$vmName"
+#VBoxManage controlvm "$vmName"  poweroff 

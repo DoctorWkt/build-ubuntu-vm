@@ -1,0 +1,14 @@
+# Config file used by the customise_iso script
+username=fred
+password=abc123
+rootpassword=abc123
+hostname=ubuntu
+timezone=Australia/Brisbane
+#proxy=http://10.10.1.2:3142
+#proxy=http://10.10.1.14:3142
+proxy=http://172.17.120.172:3142
+base_system=lubuntu-desktop
+orig_iso=/tmp/mini_17.04.iso
+new_iso=/tmp/custom.iso
+packages="rcs, build-essential"
+late_command='sh /copyit'

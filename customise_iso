@@ -1,0 +1,103 @@
+#!/bin/bash
+
+# Get the directory name of the customisation
+# Lose any trailing /
+if [ "$#" -ne 1 ]
+then echo "Usage: $0 input_dir"; exit 1
+fi
+config_dir=`echo $1 | sed 's/\/$//'`
+
+# Read the configuration
+if [ ! -f "$config_dir/config" ]
+then echo "Error: file $config_dir/config is missing"; exit 1
+fi
+. $config_dir/config
+
+# Check we have the minimum entries in the configuration
+err=0
+for i in username password hostname timezone proxy \
+	base_system orig_iso new_iso packages
+do if [ -z "${!i}" ]
+   then err=1; echo "Missing value for $i in $config_dir/config"
+   fi
+done
+if [ "$err" -eq 1 ]
+then exit 1
+fi
+
+# Check that we have the original ISO file
+if [ ! -f $orig_iso ]
+then echo "Missing original ISO file $orig_iso"; exit 1
+fi
+
+# If the password starts with a $6, it's already a hash. Otherwise,
+# generate the password hash. Protect $ signs from interpolation in Perl
+echo $password | grep -q '^\$6'
+if [ "$?" -eq 0 ]
+then pwhash=`echo $password | sed 's/[$]/\\\\$/g'`
+else pwhash=`echo $password | mkpasswd -s -m sha-512 | sed 's/[$]/\\\\$/g'`
+fi
+
+# Do we need to make a root password?
+if [ -n "$rootpassword" ]
+then makeroot=true
+     echo $rootpassword | grep -q '^\$6'
+     if [ "$?" -eq 0 ]
+     then roothash=`echo $rootpassword | sed 's/[$]/\\\\$/g'`
+     else roothash=`echo $rootpassword | mkpasswd -s -m sha-512 | \
+	sed 's/[$]/\\\\$/g'`
+     fi
+else makeroot=false; roothash=junk
+fi
+
+# Do we have a late command?
+if [ -n "$late_command" ]
+then late_command="d-i preseed/late_command string $late_command"
+else late_command='#'
+fi
+
+# Customise the preseed.cfg file
+preseed=$config_dir/preseed.cfg
+perl -p -e "s{USERNAME}{$username}; s{PASSWORD}{$pwhash}; \
+	s{HOSTNAME}{$hostname}; s{TIMEZONE}{$timezone}; \
+	s{PACKAGES}{$packages}; s{LATE_COMMAND}{$late_command}; \
+	s{MAKEROOT}{$makeroot}; s{ROOTPASS}{$roothash};
+	s{PROXY}{$proxy}; s{BASE_SYSTEM}{$base_system};" \
+	< preseed.cfg > $preseed
+#exit 0
+
+# Unpack the original ISO file
+echo Unpacking $orig_iso
+tmpdir=/tmp/iso$$
+rm -rf $tmpdir
+mkdir $tmpdir
+7z x -o$tmpdir $orig_iso > /dev/null
+
+# Add the preseed file to initrd
+echo -n "Adding $preseed: "
+curdir=`pwd`
+gunzip $tmpdir/initrd.gz 
+cd $config_dir
+echo preseed.cfg | cpio -F $tmpdir/initrd --append -o -H newc
+cd $curdir
+
+# Add any extra files to the ISO image
+if [ -d $config_dir/cdrom ]
+then echo -n "Adding extra files from $config_dir/cdrom: "
+     cd $config_dir/cdrom
+     /bin/ls -1 | cpio -F $tmpdir/initrd --append -o -H newc
+     cd $curdir
+fi
+
+# Recompress the initrd file
+gzip $tmpdir/initrd
+
+# Boot without waiting for user input
+sed -i -r 's/timeout\s+[0-9]+/timeout 1/g' $tmpdir/isolinux.cfg
+
+# Generate the new ISO file
+echo Generating $new_iso
+genisoimage -quiet -o $new_iso -r -J -no-emul-boot -boot-load-size 4 \
+	-boot-info-table -b isolinux.bin -c boot.cat $tmpdir
+rm -rf $tmpdir
+exit 0
