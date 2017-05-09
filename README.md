@@ -97,7 +97,7 @@ With the customised ISO now generated, you can start a VirtualBox VM and
 install the system with the `vbox_boot` script:
 
 ```
-./vbox_boot test1
+$ ./vbox_boot test1
 0%...10%...20%...30%...40%...50%...60%...70%...80%...90%...100%
 Virtual machine 'test1' is created and registered.
 UUID: 1d36dc56-06dc-4184-bfc1-2c63936c460c
