@@ -14,7 +14,7 @@ You will need already installed:
 * These packages: whois, p7zip-full, genisoimage
 * A copy of the [Minimal Ubuntu CD](https://help.ubuntu.com/community/Installation/MinimalCD)
 
-It is also a good idea to install the *apt-cacher-ng package*. The Minimal
+It is also a good idea to install the *apt-cacher-ng* package. The Minimal
 Ubuntu CD has very few packages; most of them are installed from the Internet.
 The *apt-cacher-ng* package will act as a caching proxy, so you can build the
 customised ISO several times and only have to download the packages once.
@@ -42,7 +42,7 @@ packages="rcs, build-essential"
 late_command='sh /copyit'
 ```
 
-The compulsary lines are *username*, *password*, *hostname*, *timezone*,
+The compulsory lines are *username*, *password*, *hostname*, *timezone*,
 *proxy*, *base_system*, *orig_iso*, *new_iso* and *packages*.
 
 The *username*, *password*, *hostname* and *timezone* should be obvious. The
@@ -65,7 +65,7 @@ the available options are:
 *    lamp-server
 *    print-server (print server)
 
-If you want extra packages installed, list them as a comma-separated
+If you want extra packages installed, list them as comma-separated
 names on the *packages* line.
 
 In the `test1` directory, there is a subdirectory called `cdrom`. Anything
@@ -133,3 +133,7 @@ point for you to make your own changes. Some things to add:
 
 Yes, I know that this could all be done with Packer. Feel free to show me
 how! I just wanted to try doing it with a couple of simple shell scripts :-)
+
+P.S. I borrowed most of the ideas and the shell code from other Github
+repositories and from various web pages. I wish I had kept track of the
+sources, so my apologies to those people who wrote the original code.
